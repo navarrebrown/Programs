@@ -1,0 +1,29 @@
+<project name = "SimpleWebServer" default = "run">
+    <description>
+        buildfile for SimpleWebServer
+    </description>
+    <!--set global properties for this build-->
+    <property name = "bin" location = "bin"/>
+    <property name = "src" location = "src"/>
+    <!--Targets init, compile, run and clean-->
+    <target name = "init">
+        <!--create the bin directory used by compile-->
+        <mkdir dir = "${bin}"/>
+    </target>
+
+    <target name = "compile" depends = "init" description = "compile the program">
+        <!--Compile the SImpleWebserver -->
+        <javac srcdir = "${src}" destdir = "${bin}"/>
+    </target>
+
+    <target name = "run" depends = "compile">
+        <java classname = "edu.nmsu.cs.webserver.WebServer">
+            <classpath path = "${bin}"/>
+        </java>
+    </target>
+
+    <target name = "clean" description = "clean up">
+        <!--Delete the bin directory-->
+        <delete dir = "${bin}"/>
+    </target>
+</project>

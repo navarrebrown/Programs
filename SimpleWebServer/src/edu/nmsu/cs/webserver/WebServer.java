@@ -10,12 +10,13 @@ package edu.nmsu.cs.webserver;
  * requests. When one happens, it creates a new object of the WebWorker class and hands that client
  * connection off to the WebWorker object. The WebServer object then just keeps listening for new
  * client connections. See the WebWorker source for more information about it.
- * 
+ *
  * @author Jon Cook, Ph.D.
- * 
+ *
  **/
 import java.net.ServerSocket;
 import java.net.Socket;
+
 
 public class WebServer
 {
@@ -34,7 +35,7 @@ public class WebServer
 	/**
 	 * Web server starting point. This method does not return until the server is finished, so perhaps
 	 * it should be named "runServer" or something like that.
-	 * 
+	 *
 	 * @param port
 	 *          is the TCP port number to accept connections on
 	 **/

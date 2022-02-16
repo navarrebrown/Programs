@@ -16,19 +16,17 @@ package edu.nmsu.cs.webserver;
  * request; it writes out an HTTP header to begin its response, and then it writes out some HTML
  * content for the response content. HTTP requests and responses are just lines of text (in a very
  * particular format).
- * 
+ *
  * @author Jon Cook, Ph.D.
  *
  **/
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.*;
 
 public class WebWorker implements Runnable
 {
@@ -50,14 +48,16 @@ public class WebWorker implements Runnable
 	 **/
 	public void run()
 	{
+		String request = null;
 		System.err.println("Handling connection...");
 		try
 		{
 			InputStream is = socket.getInputStream();
 			OutputStream os = socket.getOutputStream();
-			readHTTPRequest(is);
-			writeHTTPHeader(os, "text/html");
-			writeContent(os);
+			System.out.println("input stream read: " + is);
+			request = readHTTPRequest(is);
+			writeHTTPHeader(os, "text/html", request);
+			writeContent(os,request);
 			os.flush();
 			socket.close();
 		}
@@ -72,10 +72,21 @@ public class WebWorker implements Runnable
 	/**
 	 * Read the HTTP request header.
 	 **/
-	private void readHTTPRequest(InputStream is)
+	private String readHTTPRequest(InputStream is)
 	{
 		String line;
+		String request;
+		String retRequest = null;
 		BufferedReader r = new BufferedReader(new InputStreamReader(is));
+		try{
+			request = r.readLine();
+			System.out.println("request = " + request);
+			retRequest = request.substring(5,(request.length() - 9));
+			System.out.println("retRequest = " + retRequest);
+		}catch(Exception e){
+			System.err.println("Request error: " + e);
+		}
+
 		while (true)
 		{
 			try
@@ -93,48 +104,130 @@ public class WebWorker implements Runnable
 				break;
 			}
 		}
-		return;
+		return retRequest;
 	}
 
 	/**
 	 * Write the HTTP header lines to the client network connection.
-	 * 
+	 *
 	 * @param os
 	 *          is the OutputStream object to write to
 	 * @param contentType
 	 *          is the string MIME content type (e.g. "text/html")
 	 **/
-	private void writeHTTPHeader(OutputStream os, String contentType) throws Exception
+	private void writeHTTPHeader(OutputStream os, String contentType, String request) throws Exception
 	{
-		Date d = new Date();
-		DateFormat df = DateFormat.getDateTimeInstance();
-		df.setTimeZone(TimeZone.getTimeZone("GMT"));
-		os.write("HTTP/1.1 200 OK\n".getBytes());
-		os.write("Date: ".getBytes());
-		os.write((df.format(d)).getBytes());
-		os.write("\n".getBytes());
-		os.write("Server: Jon's very own server\n".getBytes());
-		// os.write("Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT\n".getBytes());
-		// os.write("Content-Length: 438\n".getBytes());
-		os.write("Connection: close\n".getBytes());
-		os.write("Content-Type: ".getBytes());
-		os.write(contentType.getBytes());
-		os.write("\n\n".getBytes()); // HTTP header ends with 2 newlines
+		if(request != null){
+			String name;//used to hold the absolute pathname
+			File path = new File(request);
+			name = path.getAbsolutePath();
+			System.out.println("Absolute Path: " + name);
+			Date d = new Date();
+			DateFormat df = DateFormat.getDateTimeInstance();
+			df.setTimeZone(TimeZone.getTimeZone("GMT"));
+			if(!path.isDirectory() && path.exists()){
+				os.write("HTTP/1.1 200 OK\n".getBytes());
+				os.write("Date: ".getBytes());
+				os.write((df.format(d)).getBytes());
+				os.write("\n".getBytes());
+				os.write("Server: Navarre's very own server\n".getBytes());
+				// os.write("Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT\n".getBytes());
+				// os.write("Content-Length: 438\n".getBytes());
+				os.write("Connection: close\n".getBytes());
+				os.write("Content-Type: ".getBytes());
+				os.write(contentType.getBytes());
+				os.write("\n\n".getBytes()); // HTTP header ends with 2 newlines
+			}else{
+				os.write("HTTP/1.1 404 NOT FOUND\n".getBytes());
+				os.write("Date: ".getBytes());
+				os.write((df.format(d)).getBytes());
+				os.write("\n".getBytes());
+				os.write("Server: Navarre's very own server\n".getBytes());
+				// os.write("Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT\n".getBytes());
+				// os.write("Content-Length: 438\n".getBytes());
+				os.write("Connection: close\n".getBytes());
+				os.write("Content-Type: ".getBytes());
+				os.write(contentType.getBytes());
+				os.write("\n\n".getBytes()); // HTTP header ends with 2 newlines
+			}//end if else
+		}else{
+			Date d = new Date();
+			DateFormat df = DateFormat.getDateTimeInstance();
+			df.setTimeZone(TimeZone.getTimeZone("GMT"));
+			os.write("HTTP/1.1 404 NOT FOUND\n".getBytes());
+			os.write("Date: ".getBytes());
+			os.write((df.format(d)).getBytes());
+			os.write("\n".getBytes());
+			os.write("Server: Navarre's very own server\n".getBytes());
+			// os.write("Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT\n".getBytes());
+			// os.write("Content-Length: 438\n".getBytes());
+			os.write("Connection: close\n".getBytes());
+			os.write("Content-Type: ".getBytes());
+			os.write(contentType.getBytes());
+			os.write("\n\n".getBytes()); // HTTP header ends with 2 newlines
+		}//end if else
 		return;
 	}
 
 	/**
 	 * Write the data content to the client network connection. This MUST be done after the HTTP
 	 * header has been written out.
-	 * 
+	 *
 	 * @param os
 	 *          is the OutputStream object to write to
 	 **/
-	private void writeContent(OutputStream os) throws Exception
+	private void writeContent(OutputStream os, String request) throws Exception
 	{
-		os.write("<html><head></head><body>\n".getBytes());
-		os.write("<h3>My web server works!</h3>\n".getBytes());
-		os.write("</body></html>\n".getBytes());
+		File name = new File(request);//create a file for the request
+	 	if(!name.isDirectory() && name.exists()){//if file exits open it and print content, else print 404 NOT FOUND
+			BufferedReader in = new BufferedReader(new FileReader(name));
+			String line = "";//used to hold the tokenized text
+			String text = "";//used to hold the content of each line of file
+			Date d = new Date();
+			DateFormat df = DateFormat.getDateTimeInstance();
+			int start = 0;
+			int end = 0;
+			String[] words = null;
+			int i = 0;
+
+			while((line = in.readLine()) != null ){//read each line of the file until there is no more content
+				text = text + " " + line;
+			}//end while
+
+			StringTokenizer tokenizer = new StringTokenizer(text, "\n \t");
+			int num_tokens = tokenizer.countTokens();
+			words = new String[num_tokens];
+			while (tokenizer.hasMoreTokens()){
+				String word = tokenizer.nextToken();
+				words[i] = word;
+				i++;
+			}//end while
+
+			for(i = 0; i < words.length; i++){
+			    if(words[i].equals("<p>"))
+			        start = i + 1;
+			    else if(words[i].equals("</p>"))
+			        end = i;
+			    else if(words[i].equals("<cs371date>."))
+			        words[i] = df.format(d) + ".";
+			    else if(words[i].equals("<cs371server>."))
+			        words[i] = "Navarre's Server.";
+			}//end for
+
+			line = "";//reset line
+			for(i = start; i < end; i++){
+	            line = line + " " + words[i];
+			}//end for
+
+			os.write(line.getBytes());
+			in.close();//close bufferedReader
+		}else{
+			String text = "404 NOT FOUND!";
+			os.write(text.getBytes());
+		}//end if else
+
+
+
 	}
 
 } // end class
