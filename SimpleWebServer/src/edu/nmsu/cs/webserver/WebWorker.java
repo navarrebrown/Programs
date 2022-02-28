@@ -56,8 +56,26 @@ public class WebWorker implements Runnable
 			OutputStream os = socket.getOutputStream();
 			System.out.println("input stream read: " + is);
 			request = readHTTPRequest(is);
-			writeHTTPHeader(os, "text/html", request);
-			writeContent(os,request);
+			if(request.equals("favicon.ico"))
+				System.out.println("Looking for url icon image");
+			String extension = request.substring(request.lastIndexOf(".") + 1);
+			System.out.println("File Extension: " + extension);
+			if(extension.equals("html")){
+				writeHTTPHeader(os, "text/html", request);
+				writeContentText(os,request);//, "text/html");
+			}else if(extension.equals("png")){
+				writeHTTPHeader(os, "image/png", request);
+				writeContentImage(os,request);//, "image/jpeg");
+			}else if(extension.equals("jpeg")){
+				writeHTTPHeader(os, "image/jpeg", request);
+				writeContentImage(os,request);//, "image/jpeg");
+			}else if(extension.equals("gif")){
+				writeHTTPHeader(os, "image/gif", request);
+				writeContentImage(os,request);//, "image/jpeg");
+			}else{
+				writeHTTPHeader(os, "text/html", request);
+				writeContentText(os,request);
+			}
 			os.flush();
 			socket.close();
 		}
@@ -176,7 +194,7 @@ public class WebWorker implements Runnable
 	 * @param os
 	 *          is the OutputStream object to write to
 	 **/
-	private void writeContent(OutputStream os, String request) throws Exception
+	private void writeContentText(OutputStream os, String request) throws Exception
 	{
 		File name = new File(request);//create a file for the request
 	 	if(!name.isDirectory() && name.exists()){//if file exits open it and print content, else print 404 NOT FOUND
@@ -185,49 +203,34 @@ public class WebWorker implements Runnable
 			String text = "";//used to hold the content of each line of file
 			Date d = new Date();
 			DateFormat df = DateFormat.getDateTimeInstance();
-			int start = 0;
-			int end = 0;
-			String[] words = null;
-			int i = 0;
 
 			while((line = in.readLine()) != null ){//read each line of the file until there is no more content
-				text = text + " " + line;
+				text = text + "\n" + line;
 			}//end while
 
-			StringTokenizer tokenizer = new StringTokenizer(text, "\n \t");
-			int num_tokens = tokenizer.countTokens();
-			words = new String[num_tokens];
-			while (tokenizer.hasMoreTokens()){
-				String word = tokenizer.nextToken();
-				words[i] = word;
-				i++;
-			}//end while
+			text = text.replaceAll("<cs371date>", df.format(d));
+			text = text.replaceAll("<cs371server>", "Navarre's Server");
 
-			for(i = 0; i < words.length; i++){
-			    if(words[i].equals("<p>"))
-			        start = i + 1;
-			    else if(words[i].equals("</p>"))
-			        end = i;
-			    else if(words[i].equals("<cs371date>."))
-			        words[i] = df.format(d) + ".";
-			    else if(words[i].equals("<cs371server>."))
-			        words[i] = "Navarre's Server.";
-			}//end for
-
-			line = "";//reset line
-			for(i = start; i < end; i++){
-	            line = line + " " + words[i];
-			}//end for
-
-			os.write(line.getBytes());
+			os.write(text.getBytes());
 			in.close();//close bufferedReader
 		}else{
 			String text = "404 NOT FOUND!";
 			os.write(text.getBytes());
 		}//end if else
+	}//end  writeContentText
 
-
-
-	}
-
+	private void writeContentImage(OutputStream os, String request) throws Exception
+	{
+		int offset = 0;
+		int bytesRead = 0;
+		File file = new File(request);
+		long len = file.length();
+		System.out.println("len: " + len);
+		byte[] buff = new byte[(int)len + 1];
+		FileInputStream name = new FileInputStream(file);//create a file for the request
+	 	if(!file.isDirectory() && file.exists()){//if file exits open it and print content, else print 404 NOT FOUND
+			bytesRead = name.read(buff, offset, buff.length - 1);
+			os.write(buff, 0, bytesRead);
+		}//end if
+	}//end writeContentImage
 } // end class

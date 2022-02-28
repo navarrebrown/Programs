@@ -6,7 +6,7 @@
     <property name = "bin" location = "bin"/>
     <property name = "src" location = "src"/>
     <!--Targets init, compile, run and clean-->
-    <target name = "init">
+    <target name = "init" depends = "clean">
         <!--create the bin directory used by compile-->
         <mkdir dir = "${bin}"/>
     </target>

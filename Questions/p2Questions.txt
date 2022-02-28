@@ -1,0 +1,10 @@
+Question1:
+    I estimate it will take me 2 hours and thirty minutes to complete this assignment
+
+Question2:
+    thought and design: 30 minutes
+    programming: 1.5 hours
+    debugging: 1 hour
+    total: 2 hours
+Question3:
+    (2 - 2/ 4) * 100 = 100% acccurate
