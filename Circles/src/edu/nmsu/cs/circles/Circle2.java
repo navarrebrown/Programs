@@ -5,7 +5,7 @@ public class Circle2 extends Circle
 
 	public Circle2(double x, double y, double radius)
 	{
-		super(y, x, radius);
+		super(x, y, radius);//x and y are put in the proper position for the method call
 	}
 
 	public boolean intersects(Circle other)
